@@ -1,24 +1,44 @@
-name: Build Android APK
+name: Build HENPocket APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Unzip HENPocket project
+        run: |
+          unzip -q HENPocket.zip -d extracted_project
+          # Moves files out if they were zipped inside a single parent folder
+          if [ $(ls -A extracted_project | wc -l) -eq 1 ] && [ -d extracted_project/* ]; then
+            mv extracted_project/*/* .
+          else
+            mv extracted_project/* .
+          fi
+          rm -rf extracted_project
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
       - name: Build Debug APK
-        run: gradle assembleDebug
+        run: ./gradlew assembleDebug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
